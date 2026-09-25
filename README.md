@@ -83,7 +83,7 @@ npm install
 
 ---
 
-## 🚀 Running the Application
+## 🚀 Running the Application Locally
 
 **Run Backend (Terminal 1):**
 ```bash
@@ -98,3 +98,24 @@ npm run dev
 ```
 
 Open `http://localhost:5173` in your browser.
+
+---
+
+## 🌐 Deployment to Vercel
+
+### 1. Deploy Frontend to Vercel
+1. Go to [vercel.com/new](https://vercel.com/new) and import your repository: `Mayank-144/Fullstack-MERN-RAG`.
+2. Set **Root Directory** to `client`.
+3. Framework Preset: **Vite**.
+4. In Environment Variables, add:
+   - `VITE_API_URL`: Your deployed backend URL.
+5. Click **Deploy**.
+
+### 2. Deploy Backend (Serverless on Vercel or Render)
+1. Import repository on Vercel with **Root Directory** set to `server`.
+2. Add Environment Variables in Vercel project settings:
+   - `MONGODB_URI`: Your MongoDB Atlas connection string.
+   - `COHERE_API_KEY`: Your Cohere API key.
+   - `GROQ_API_KEY`: Your Groq API key.
+   - `GROQ_MODEL`: `openai/gpt-oss-120b`.
+3. Click **Deploy**.
