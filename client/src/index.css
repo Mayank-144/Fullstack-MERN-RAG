@@ -1,0 +1,169 @@
+:root {
+  --bg-main: #212121;
+  --bg-sidebar: #171717;
+  --bg-surface: #2f2f2f;
+  --bg-user-msg: #2f2f2f;
+  --border-subtle: #333333;
+  --border-focus: #555555;
+  --text-primary: #ececec;
+  --text-secondary: #b4b4b4;
+  --text-muted: #737373;
+  --accent: #10a37f; /* ChatGPT Green */
+  --accent-hover: #1a7f64;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Markdown Rendering Styles (ChatGPT Look) */
+.markdown-content {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #ececec;
+  word-break: break-word;
+}
+
+.markdown-content p {
+  margin-bottom: 12px;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+  color: #ffffff;
+  font-weight: 700;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+.markdown-content h1 { font-size: 20px; }
+.markdown-content h2 { font-size: 18px; }
+.markdown-content h3 { font-size: 16px; }
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-left: 20px;
+  margin-bottom: 12px;
+}
+
+.markdown-content li {
+  margin-bottom: 4px;
+}
+
+.markdown-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Markdown Tables */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.markdown-content th {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.markdown-content td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.markdown-content tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown-content code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+}
+
+.markdown-content pre {
+  background: #171717;
+  padding: 14px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+  border: 1px solid var(--border-subtle);
+}
+
+.markdown-content pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+  margin: 12px 0;
+  color: var(--text-secondary);
+}
+
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 16px 0;
+}
+
+/* Animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
