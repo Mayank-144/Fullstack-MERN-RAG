@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Document from '../models/Document.js';
 import Chunk from '../models/Chunk.js';
 import { parseDocument } from '../services/parserService.js';
@@ -9,6 +10,13 @@ import { generateEmbeddings } from '../services/cohereService.js';
  */
 export const uploadDocument = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'MongoDB database is not connected. Please check your IP whitelist in MongoDB Atlas.'
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -98,11 +106,21 @@ export const uploadDocument = async (req, res) => {
  */
 export const getAllDocuments = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        documents: [],
+        dbConnected: false
+      });
+    }
+
     const documents = await Document.find().sort({ createdAt: -1 });
     return res.status(200).json({
       success: true,
       count: documents.length,
-      documents
+      documents,
+      dbConnected: true
     });
   } catch (error) {
     return res.status(500).json({
@@ -117,6 +135,13 @@ export const getAllDocuments = async (req, res) => {
  */
 export const deleteDocument = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'MongoDB is not connected.'
+      });
+    }
+
     const { id } = req.params;
 
     const doc = await Document.findById(id);

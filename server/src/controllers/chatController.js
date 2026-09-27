@@ -1,15 +1,16 @@
+import mongoose from 'mongoose';
 import { generateQueryEmbedding } from '../services/cohereService.js';
 import { searchSimilarChunks } from '../services/vectorSearchService.js';
 import { generateRAGAnswer, generateDirectAnswer } from '../services/groqService.js';
 
 // Minimum similarity score for a chunk to be considered relevant (0.0 to 1.0)
-const SIMILARITY_THRESHOLD = 0.50;
+const SIMILARITY_THRESHOLD = 0.65;
 
 /**
  * Handle Full RAG Chat Query with Fallback:
- * 1. Vector Search runs
+ * 1. Vector Search runs (if DB is connected)
  * 2. If relevant chunks found (score >= threshold) -> RAG Answer with Citations
- * 3. If no relevant chunks (low similarity/general question) -> Direct LLM Fallback
+ * 3. If no relevant chunks or DB offline -> Direct LLM Fallback
  */
 export const chatQuery = async (req, res) => {
   try {
@@ -23,20 +24,35 @@ export const chatQuery = async (req, res) => {
     }
 
     const trimmedQuery = query.trim();
+    let relevantChunks = [];
+    let vectorSearchFailed = false;
 
-    // 1. Generate query embedding using Cohere (search_query mode)
-    const queryVector = await generateQueryEmbedding(trimmedQuery);
+    // Check if MongoDB is connected before attempting vector search
+    const isDbConnected = mongoose.connection.readyState === 1;
 
-    // 2. Retrieve top candidate chunks from MongoDB Atlas Vector Search
-    const candidateChunks = await searchSimilarChunks(queryVector, {
-      limit: Number(limit) || 4,
-      documentId: documentId || null
-    });
+    if (isDbConnected) {
+      try {
+        // 1. Generate query embedding using Cohere (search_query mode)
+        const queryVector = await generateQueryEmbedding(trimmedQuery);
 
-    // 3. Filter chunks by similarity threshold
-    const relevantChunks = candidateChunks.filter(
-      (chunk) => chunk.score >= SIMILARITY_THRESHOLD
-    );
+        // 2. Retrieve top candidate chunks from MongoDB Atlas Vector Search
+        const candidateChunks = await searchSimilarChunks(queryVector, {
+          limit: Number(limit) || 4,
+          documentId: documentId || null
+        });
+
+        // 3. Filter chunks by similarity threshold
+        relevantChunks = candidateChunks.filter(
+          (chunk) => chunk.score >= SIMILARITY_THRESHOLD
+        );
+      } catch (searchErr) {
+        console.warn('Vector Search Retrieval warning:', searchErr.message);
+        vectorSearchFailed = true;
+      }
+    } else {
+      console.warn('MongoDB is disconnected. Skipping vector search.');
+      vectorSearchFailed = true;
+    }
 
     // 4. Decision: RAG Mode vs Direct LLM Fallback Mode
     if (relevantChunks.length > 0) {
@@ -54,6 +70,14 @@ export const chatQuery = async (req, res) => {
         retrievedChunksCount: relevantChunks.length
       });
     } else {
+      // If user specifically requested a document search and DB is offline / failed
+      if (documentId && vectorSearchFailed) {
+        return res.status(503).json({
+          success: false,
+          message: 'Database connection issue: Unable to search the document. Please ensure your IP address is whitelisted in MongoDB Atlas (Network Access).'
+        });
+      }
+
       // Low similarity or General question -> Fallback directly to Groq LLM
       const directResult = await generateDirectAnswer(trimmedQuery, history);
 
@@ -66,7 +90,9 @@ export const chatQuery = async (req, res) => {
         sources: [],
         model: directResult.model,
         retrievedChunksCount: 0,
-        fallbackReason: 'No document chunk matched the similarity threshold'
+        fallbackReason: vectorSearchFailed
+          ? 'Vector database offline - answered with direct Groq LLM'
+          : 'No document chunk matched the similarity threshold'
       });
     }
   } catch (error) {

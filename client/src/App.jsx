@@ -19,6 +19,7 @@ export default function App() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [dbConnected, setDbConnected] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -27,9 +28,11 @@ export default function App() {
       const res = await getDocuments();
       if (res.success) {
         setDocuments(res.documents || []);
+        setDbConnected(res.dbConnected !== false);
       }
     } catch (error) {
       console.error('Failed to load documents:', error);
+      setDbConnected(false);
     }
   };
 
@@ -235,8 +238,8 @@ export default function App() {
           {/* Footer */}
           <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', marginTop: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10a37f' }} />
-              <span>MongoDB Atlas Connected</span>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: dbConnected ? '#10a37f' : '#f59e0b' }} />
+              <span>{dbConnected ? 'MongoDB Atlas Connected' : 'Vector DB Disconnected (Direct LLM)'}</span>
             </div>
           </div>
         </div>
@@ -272,6 +275,7 @@ export default function App() {
         <ChatWindow
           activeDocument={activeDocument}
           onAttachFileClick={() => fileInputRef.current?.click()}
+          onClearActiveDocument={() => setActiveDocument(null)}
           uploading={uploading}
         />
       </main>

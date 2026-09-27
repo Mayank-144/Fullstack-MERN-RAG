@@ -6,13 +6,14 @@ import { connectDB } from './src/config/db.js';
 
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB Atlas and start listening
+// Start Express server and connect to MongoDB Atlas
 const startServer = async () => {
   try {
-    await connectDB();
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
+    // Attempt DB connection (non-blocking)
+    connectDB();
   } catch (error) {
     console.error('Failed to start server:', error);
   }

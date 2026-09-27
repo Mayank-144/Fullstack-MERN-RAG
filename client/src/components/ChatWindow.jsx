@@ -10,7 +10,8 @@ import {
   Loader2,
   Paperclip,
   Sparkles,
-  Database
+  Database,
+  X
 } from 'lucide-react';
 import { sendChatMessage } from '../services/api';
 
@@ -25,6 +26,7 @@ import { sendChatMessage } from '../services/api';
 export const ChatWindow = ({
   activeDocument = null,
   onAttachFileClick = null,
+  onClearActiveDocument = null,
   uploading = false
 }) => {
   const [messages, setMessages] = useState([
@@ -113,11 +115,11 @@ export const ChatWindow = ({
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
+      const serverMsg = error.response?.data?.message || error.message;
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content:
-          '⚠️ Could not connect to the backend server. Please check your backend connection and API keys.',
+        content: `⚠️ **Error:** ${serverMsg || 'Could not connect to the backend server. Please check your backend connection and API keys.'}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isError: true
       };
@@ -192,11 +194,34 @@ export const ChatWindow = ({
               }}
             >
               <FileText size={13} />
-              {activeDocument.fileName}
+              <span style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {activeDocument.fileName}
+              </span>
+              {onClearActiveDocument && (
+                <button
+                  onClick={onClearActiveDocument}
+                  title="Switch to All Documents / General AI"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#10a37f',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '2px',
+                    marginLeft: '2px',
+                    borderRadius: '4px'
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(16, 163, 127, 0.2)')}
+                  onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <X size={13} />
+                </button>
+              )}
             </span>
           ) : (
             <span style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <Database size={13} /> Searching all documents
+              <Database size={13} /> All Documents & General AI
             </span>
           )}
         </div>

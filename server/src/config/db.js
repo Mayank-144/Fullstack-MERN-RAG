@@ -18,9 +18,12 @@ export const connectDB = async () => {
     return;
   }
   try {
-    const conn = await mongoose.connect(uri);
+    const conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000
+    });
     console.log(`✅ MongoDB Atlas Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    console.error(`💡 Tip: If using MongoDB Atlas, make sure your IP is added to the Atlas IP Access List (Atlas -> Security -> Network Access -> Add IP Address -> Allow Access from Anywhere 0.0.0.0/0).`);
   }
 };
