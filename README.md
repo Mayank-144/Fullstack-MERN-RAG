@@ -7,7 +7,7 @@
 [![MongoDB Atlas](https://img.shields.io/badge/MongoDB%20Atlas-Vector%20Search-47A248?style=flat&logo=mongodb&logoColor=white)](https://www.mongodb.com/products/platform/atlas-vector-search)
 [![Cohere](https://img.shields.io/badge/Cohere-Embed%20v3-39594C?style=flat&logo=cohere&logoColor=white)](https://cohere.com/)
 [![Groq](https://img.shields.io/badge/Groq-gpt--oss--120b-F55036?style=flat)](https://groq.com/)
-[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=flat&logo=render&logoColor=white)](https://render.com/)
 
 A production-grade, fullstack **Retrieval-Augmented Generation (RAG)** knowledge assistant. Ingest **PDF** and **Excel** documents, transform text into dense 1024-dimensional embeddings with **Cohere Embed v3**, perform cosine similarity vector search using native **MongoDB Atlas `$vectorSearch`**, and generate grounded, cited answers in milliseconds with **Groq Cloud LLM** (`openai/gpt-oss-120b`).
 
@@ -25,9 +25,9 @@ A production-grade, fullstack **Retrieval-Augmented Generation (RAG)** knowledge
   - [1. Backend Setup](#1-backend-setup)
   - [2. Frontend Setup](#2-frontend-setup)
 - [API Reference](#-api-reference)
-- [Deployment to Vercel](#-deployment-to-vercel)
-  - [Backend Deployment (Serverless API)](#1-deploy-backend-to-vercel)
-  - [Frontend Deployment (Vite Client)](#2-deploy-frontend-to-vercel)
+- [Deployment to Render](#-deployment-to-render)
+  - [1. Deploy Backend (Web Service)](#1-deploy-backend-on-render-web-service)
+  - [2. Deploy Frontend (Static Site)](#2-deploy-frontend-on-render-static-site)
 - [Troubleshooting & FAQs](#-troubleshooting--faqs)
 
 ---
@@ -47,7 +47,7 @@ flowchart TD
     subgraph Retrieval["Query & Generation Pipeline"]
         G[User Asks Question] --> H[Cohere Embed v3 API: 'search_query' input type]
         H --> I[MongoDB Atlas: $vectorSearch Cosine Similarity]
-        I --> J{Similarity Score >= 0.50?}
+        I --> J{Similarity Score >= 0.65?}
         J -- Yes (Document Match) --> K[Assemble Grounded Context Prompt + Citations]
         J -- No (Low Similarity / General) --> L[Fallback: Direct Conversational LLM Mode]
         K --> M[Groq Cloud LLM: openai/gpt-oss-120b]
@@ -73,16 +73,14 @@ flowchart TD
   - Executes high-performance similarity search directly inside MongoDB using the `$vectorSearch` aggregation stage with Cosine metric.
   - Supports scoped searches targeting a specific document or global search across the entire knowledge base.
 - 🔀 **Intelligent Dual-Mode Fallback Router**:
-  - Evaluates retrieved chunk similarity against a strict confidence threshold (`0.50`).
+  - Evaluates retrieved chunk similarity against a confidence threshold (`0.65`).
   - **RAG Mode**: Generates factual, hallucination-resistant answers with chunk-level citations.
-  - **Direct LLM Fallback**: General greetings or unrelated queries are answered conversationally without grounding errors.
+  - **Direct LLM Fallback**: General greetings, questions, or coding problems are answered conversationally without grounding errors.
 - 💬 **ChatGPT-Inspired UI**:
   - Dark-mode aesthetic with collapsible sidebar and document manager.
   - Real-time file upload progress bar and active document focus indicator.
-  - Rich Markdown rendering with full GitHub Flavored Markdown table support (`react-markdown` + `remark-gfm`).
+  - Rich Markdown rendering with full GitHub Flavored Markdown table and code support (`react-markdown` + `remark-gfm`).
   - Interactive citations drawer displaying referenced chunks and similarity metrics.
-- 🌐 **Vercel Serverless Ready**:
-  - Native serverless entry point (`server/api/index.js`) with persistent MongoDB connection pooling and DNS fallback.
 
 ---
 
@@ -96,7 +94,7 @@ flowchart TD
 | **Embedding Engine** | Cohere API (`embed-english-v3.0`, 1024 dimensions) |
 | **LLM Inference** | Groq Cloud SDK (`openai/gpt-oss-120b`) |
 | **File Parsers** | `pdf-parse` (PDF Documents), `xlsx` (Excel Spreadsheets) |
-| **Hosting & Deployment** | Vercel (Frontend SPA & Serverless Functions) |
+| **Hosting & Deployment** | Render (Backend Web Service & Frontend Static Site) |
 
 ---
 
@@ -117,14 +115,11 @@ Fullstack-MERN-RAG/
 │   │   └── main.jsx                # React DOM entry point
 │   ├── .env.example
 │   ├── package.json
-│   ├── vercel.json                 # Vercel SPA routing rewrite rules
 │   └── vite.config.js              # Vite config with backend proxy
 ├── server/                         # Express.js Backend
-│   ├── api/
-│   │   └── index.js                # Vercel Serverless entry point
 │   ├── src/
 │   │   ├── config/
-│   │   │   └── db.js               # MongoDB connection with DNS resolution
+│   │   │   └── db.js               # MongoDB connection with DNS resolution & fast timeout
 │   │   ├── controllers/
 │   │   │   ├── chatController.js   # RAG & direct chat query handlers
 │   │   │   └── documentController.js # Upload, chunk, embed, delete handlers
@@ -147,8 +142,7 @@ Fullstack-MERN-RAG/
 │   │   └── app.js                  # Express application setup
 │   ├── .env.example
 │   ├── package.json
-│   ├── server.js                   # Local server entry point
-│   └── vercel.json                 # Serverless deployment configuration
+│   └── server.js                   # Server entry point
 └── README.md
 ```
 
@@ -269,22 +263,6 @@ Open `http://localhost:5173` in your browser.
 | `GET` | `/api/documents` | List all tracked documents & metadata | None |
 | `DELETE` | `/api/documents/:id` | Cascade delete document and its vector chunks | URL parameter `id` |
 
-#### Upload Response Example:
-```json
-{
-  "success": true,
-  "message": "File \"financial_report.pdf\" processed and stored in Vector DB successfully!",
-  "document": {
-    "id": "66f43e1...",
-    "fileName": "financial_report.pdf",
-    "fileType": "pdf",
-    "chunkCount": 18,
-    "fileSize": 1048576,
-    "createdAt": "2026-09-27T10:00:00.000Z"
-  }
-}
-```
-
 ---
 
 ### Chat & Vector Retrieval
@@ -295,67 +273,48 @@ Open `http://localhost:5173` in your browser.
 | `POST` | `/api/chat/retrieve` | Inspect raw retrieved vector chunks | `{ query, documentId?, limit? }` |
 | `GET` | `/health` | Server health and uptime status | None |
 
-#### Chat Query Request Example:
-```json
-{
-  "query": "What are the Q3 revenue numbers?",
-  "documentId": "66f43e1...",
-  "history": [
-    { "role": "user", "content": "Hello!" },
-    { "role": "assistant", "content": "Hi! How can I assist you with your documents?" }
-  ]
-}
-```
+---
 
-#### Chat Query Response Example (RAG Mode):
-```json
-{
-  "success": true,
-  "query": "What are the Q3 revenue numbers?",
-  "answer": "According to the Q3 report, the total revenue was $14.2M, representing a 22% year-over-year increase.",
-  "mode": "RAG",
-  "ragUsed": true,
-  "sources": [
-    {
-      "fileName": "financial_report.pdf",
-      "chunkIndex": 4,
-      "text": "In Q3, the revenue reached $14.2M with a 22% increase...",
-      "similarityScore": 0.892
-    }
-  ],
-  "model": "openai/gpt-oss-120b",
-  "retrievedChunksCount": 3
-}
-```
+## 🌐 Deployment to Render
+
+Deploying on **[Render](https://render.com/)** is straightforward and supports persistent Node.js servers and static Vite websites:
+
+### 1. Deploy Backend on Render (Web Service)
+
+1. Go to **[Render Dashboard](https://dashboard.render.com/)** and click **New +** > **Web Service**.
+2. Connect your GitHub repository `Fullstack-MERN-RAG`.
+3. Configure the service settings:
+   - **Name**: `rag-backend` (or your preferred name)
+   - **Root Directory**: `server`
+   - **Environment**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
+4. In **Environment Variables**, add:
+   - `MONGODB_URI` = `mongodb+srv://<user>:<password>@cluster0...`
+   - `COHERE_API_KEY` = `your_cohere_api_key`
+   - `GROQ_API_KEY` = `your_groq_api_key`
+   - `GROQ_MODEL` = `openai/gpt-oss-120b`
+5. Click **Create Web Service**.
+6. Once deployed, copy your live backend URL (e.g., `https://rag-backend-xxxx.onrender.com`).
 
 ---
 
-## 🌐 Deployment to Vercel
+### 2. Deploy Frontend on Render (Static Site)
 
-### 1. Deploy Backend to Vercel
-
-1. Go to **[Vercel Dashboard](https://vercel.com/new)** and import the repository.
-2. In the configuration:
-   - **Root Directory**: Select `server`
-   - **Framework Preset**: `Other`
-3. Add the following **Environment Variables**:
-   - `MONGODB_URI`: Your MongoDB Atlas URI with username & password.
-   - `COHERE_API_KEY`: Your Cohere API key.
-   - `GROQ_API_KEY`: Your Groq API key.
-   - `GROQ_MODEL`: `openai/gpt-oss-120b`
-4. Click **Deploy**. Note your deployed backend URL (e.g., `https://your-rag-server.vercel.app`).
-
----
-
-### 2. Deploy Frontend to Vercel
-
-1. In Vercel, click **Add New Project** and import the same repository.
-2. In the configuration:
-   - **Root Directory**: Select `client`
-   - **Framework Preset**: `Vite`
-3. Add the following **Environment Variable**:
-   - `VITE_API_URL`: `https://your-rag-server.vercel.app` (your deployed backend URL from step 1).
-4. Click **Deploy**.
+1. In Render Dashboard, click **New +** > **Static Site**.
+2. Connect the same GitHub repository `Fullstack-MERN-RAG`.
+3. Configure the site settings:
+   - **Name**: `rag-frontend`
+   - **Root Directory**: `client`
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `dist`
+4. In **Environment Variables**, add:
+   - `VITE_API_URL` = `https://rag-backend-xxxx.onrender.com` *(your live backend URL from Step 1, without trailing slash)*
+5. In **Redirects / Rewrites** (optional SPA routing):
+   - **Source**: `/*`
+   - **Destination**: `/index.html`
+   - **Action**: `Rewrite`
+6. Click **Create Static Site**.
 
 ---
 
@@ -368,21 +327,15 @@ Ensure you created the search index on the `chunks` collection with the exact na
 </details>
 
 <details>
-<summary><b>2. Query returns fallback answer instead of document context</b></summary>
+<summary><b>2. MongoDB Atlas Connection Timeout or MongooseServerSelectionError</b></summary>
 
-The system uses a similarity threshold of `0.50` to prevent irrelevant hallucinated context. If the document content doesn't match the query semantically, the fallback router activates. Try asking a more specific question or ensure the file was uploaded and chunked properly.
+Make sure your current IP address (or `0.0.0.0/0` for cloud deployments) is added to the **Network Access** IP Whitelist in your MongoDB Atlas dashboard.
 </details>
 
 <details>
 <summary><b>3. Large file upload errors (413 Payload Too Large)</b></summary>
 
-Both Express backend and Vercel serverless functions are configured with body and file parsing limits (`50mb`). For very large documents (>200 pages), consider splitting into smaller files for optimal chunking and retrieval performance.
-</details>
-
-<details>
-<summary><b>4. DNS query SRV query failed on MongoDB Atlas connection</b></summary>
-
-The backend includes automatic Node.js DNS resolver fallback to Google Public DNS (`8.8.8.8`) in `server/src/config/db.js` to ensure reliable connections even on restricted networks or VPNs.
+The Express backend is configured with body and file parsing limits (`50mb`). For very large documents (>200 pages), consider splitting into smaller files for optimal chunking and retrieval performance.
 </details>
 
 ---
