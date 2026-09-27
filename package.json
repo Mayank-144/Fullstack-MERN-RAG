@@ -1,0 +1,9 @@
+{
+  "name": "fullstack-mern-rag",
+  "version": "1.0.0",
+  "description": "Fullstack MERN RAG with Cohere Embeddings & Groq LLM",
+  "scripts": {
+    "build": "cd client && npm install && npm run build && cd ../server && npm install",
+    "start": "cd server && node server.js"
+  }
+}

@@ -275,46 +275,28 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 🌐 Deployment to Render
+## 🌐 Unified Single Deployment on Render (Frontend + Backend)
 
-Deploying on **[Render](https://render.com/)** is straightforward and supports persistent Node.js servers and static Vite websites:
+You can deploy the entire fullstack application (React frontend + Node.js backend) together in **1 Single Web Service** on Render:
 
-### 1. Deploy Backend on Render (Web Service)
+### Deploy Steps:
 
 1. Go to **[Render Dashboard](https://dashboard.render.com/)** and click **New +** > **Web Service**.
 2. Connect your GitHub repository `Fullstack-MERN-RAG`.
 3. Configure the service settings:
-   - **Name**: `rag-backend` (or your preferred name)
-   - **Root Directory**: `server`
+   - **Name**: `rag-assistant` (or any name)
+   - **Root Directory**: *(Leave blank)*
    - **Environment**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `node server.js`
+   - **Build Command**: `npm run build`
+   - **Start Command**: `npm start`
 4. In **Environment Variables**, add:
    - `MONGODB_URI` = `mongodb+srv://<user>:<password>@cluster0...`
    - `COHERE_API_KEY` = `your_cohere_api_key`
    - `GROQ_API_KEY` = `your_groq_api_key`
    - `GROQ_MODEL` = `openai/gpt-oss-120b`
 5. Click **Create Web Service**.
-6. Once deployed, copy your live backend URL (e.g., `https://rag-backend-xxxx.onrender.com`).
 
----
-
-### 2. Deploy Frontend on Render (Static Site)
-
-1. In Render Dashboard, click **New +** > **Static Site**.
-2. Connect the same GitHub repository `Fullstack-MERN-RAG`.
-3. Configure the site settings:
-   - **Name**: `rag-frontend`
-   - **Root Directory**: `client`
-   - **Build Command**: `npm install && npm run build`
-   - **Publish Directory**: `dist`
-4. In **Environment Variables**, add:
-   - `VITE_API_URL` = `https://rag-backend-xxxx.onrender.com` *(your live backend URL from Step 1, without trailing slash)*
-5. In **Redirects / Rewrites** (optional SPA routing):
-   - **Source**: `/*`
-   - **Destination**: `/index.html`
-   - **Action**: `Rewrite`
-6. Click **Create Static Site**.
+Once deployed, your single live Render URL (e.g. `https://rag-assistant-xxxx.onrender.com`) will serve both the React frontend and the RAG API seamlessly!
 
 ---
 
