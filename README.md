@@ -25,9 +25,8 @@ A production-grade, fullstack **Retrieval-Augmented Generation (RAG)** knowledge
   - [1. Backend Setup](#1-backend-setup)
   - [2. Frontend Setup](#2-frontend-setup)
 - [API Reference](#-api-reference)
-- [Deployment to Render](#-deployment-to-render)
-  - [1. Deploy Backend (Web Service)](#1-deploy-backend-on-render-web-service)
-  - [2. Deploy Frontend (Static Site)](#2-deploy-frontend-on-render-static-site)
+- [Unified Single Deployment on Render](#-unified-single-deployment-on-render-frontend--backend)
+  - [Deploy Steps](#deploy-steps)
 - [Troubleshooting & FAQs](#-troubleshooting--faqs)
 
 ---
@@ -139,10 +138,11 @@ Fullstack-MERN-RAG/
 │   │   │   └── vectorSearchService.js # MongoDB Atlas $vectorSearch pipeline
 │   │   ├── utils/
 │   │   │   └── prompts.js          # System prompts & context formatting
-│   │   └── app.js                  # Express application setup
+│   │   └── app.js                  # Express application & static client serving
 │   ├── .env.example
 │   ├── package.json
 │   └── server.js                   # Server entry point
+├── package.json                    # Root unified build & start script for Render
 └── README.md
 ```
 
