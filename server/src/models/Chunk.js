@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getVectorDbProvider } from '../config/pinecone.js';
 
 const ChunkSchema = new mongoose.Schema(
   {
@@ -21,10 +22,12 @@ const ChunkSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    // 1024-dimensional float vector for Cohere Embed v3
+    // 1024-dimensional float vector for Cohere Embed v3 (Required only in MongoDB Atlas mode)
     embedding: {
       type: [Number],
-      required: true
+      required: function () {
+        return getVectorDbProvider() !== 'pinecone';
+      }
     },
     metadata: {
       charCount: Number,

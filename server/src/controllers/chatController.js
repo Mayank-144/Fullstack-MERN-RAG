@@ -1,6 +1,10 @@
-import mongoose from 'mongoose';
 import { generateQueryEmbedding } from '../services/cohereService.js';
-import { searchSimilarChunks } from '../services/vectorSearchService.js';
+import {
+  searchSimilarChunks,
+  isVectorStoreReady,
+  getVectorStoreName
+} from '../services/vectorSearchService.js';
+import { getVectorDbProvider } from '../config/pinecone.js';
 import { generateRAGAnswer, generateDirectAnswer } from '../services/groqService.js';
 
 // Minimum similarity score for a chunk to be considered relevant (0.0 to 1.0)
@@ -8,9 +12,9 @@ const SIMILARITY_THRESHOLD = 0.65;
 
 /**
  * Handle Full RAG Chat Query with Fallback:
- * 1. Vector Search runs (if DB is connected)
+ * 1. Vector Search runs (if vector store is ready)
  * 2. If relevant chunks found (score >= threshold) -> RAG Answer with Citations
- * 3. If no relevant chunks or DB offline -> Direct LLM Fallback
+ * 3. If no relevant chunks or vector store offline -> Direct LLM Fallback
  */
 export const chatQuery = async (req, res) => {
   try {
@@ -27,15 +31,15 @@ export const chatQuery = async (req, res) => {
     let relevantChunks = [];
     let vectorSearchFailed = false;
 
-    // Check if MongoDB is connected before attempting vector search
-    const isDbConnected = mongoose.connection.readyState === 1;
+    // Check if the configured vector database is ready before querying
+    const isStoreReady = isVectorStoreReady();
 
-    if (isDbConnected) {
+    if (isStoreReady) {
       try {
         // 1. Generate query embedding using Cohere (search_query mode)
         const queryVector = await generateQueryEmbedding(trimmedQuery);
 
-        // 2. Retrieve top candidate chunks from MongoDB Atlas Vector Search
+        // 2. Retrieve top candidate chunks from active vector store (Atlas or Pinecone)
         const candidateChunks = await searchSimilarChunks(queryVector, {
           limit: Number(limit) || 4,
           documentId: documentId || null
@@ -50,7 +54,7 @@ export const chatQuery = async (req, res) => {
         vectorSearchFailed = true;
       }
     } else {
-      console.warn('MongoDB is disconnected. Skipping vector search.');
+      console.warn(`${getVectorStoreName()} is not ready/configured. Skipping vector search.`);
       vectorSearchFailed = true;
     }
 
@@ -70,11 +74,16 @@ export const chatQuery = async (req, res) => {
         retrievedChunksCount: relevantChunks.length
       });
     } else {
-      // If user specifically requested a document search and DB is offline / failed
+      // If user specifically requested a document search and vector search is offline / failed
       if (documentId && vectorSearchFailed) {
+        const isPinecone = getVectorDbProvider() === 'pinecone';
+        const message = isPinecone
+          ? 'Pinecone connection issue: Unable to search the document. Please ensure your Pinecone API key and Index Name are correctly configured in server/.env.'
+          : 'Database connection issue: Unable to search the document. Please ensure your IP address is whitelisted in MongoDB Atlas (Network Access).';
+
         return res.status(503).json({
           success: false,
-          message: 'Database connection issue: Unable to search the document. Please ensure your IP address is whitelisted in MongoDB Atlas (Network Access).'
+          message
         });
       }
 
@@ -91,7 +100,7 @@ export const chatQuery = async (req, res) => {
         model: directResult.model,
         retrievedChunksCount: 0,
         fallbackReason: vectorSearchFailed
-          ? 'Vector database offline - answered with direct Groq LLM'
+          ? `${getVectorStoreName()} offline - answered with direct Groq LLM`
           : 'No document chunk matched the similarity threshold'
       });
     }
